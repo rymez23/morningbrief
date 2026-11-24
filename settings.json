@@ -1,0 +1,34 @@
+{
+  "_help": "Your morning brief settings. Edit freely; no code changes needed. news: feeds grouped by section (any RSS/Atom URL works). news_per_section: max headlines per section. gmail.query uses the same search syntax as the Gmail search box. keep_pages: how many days of old briefs to keep. name: used in the greeting. email_me: also send the page to your own Gmail (for your phone).",
+
+  "name": "PJ",
+
+  "news_per_section": 6,
+
+  "news": {
+    "Tech": [
+      {"name": "Ars Technica", "url": "https://feeds.arstechnica.com/arstechnica/index"},
+      {"name": "The Verge", "url": "https://www.theverge.com/rss/index.xml"},
+      {"name": "BBC Technology", "url": "https://feeds.bbci.co.uk/news/technology/rss.xml"}
+    ],
+    "Politics": [
+      {"name": "NPR Politics", "url": "https://feeds.npr.org/1014/rss.xml"},
+      {"name": "BBC US & Canada", "url": "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml"},
+      {"name": "The Hill", "url": "https://thehill.com/homenews/feed/"}
+    ],
+    "Science": [
+      {"name": "ScienceDaily", "url": "https://www.sciencedaily.com/rss/top/science.xml"},
+      {"name": "NASA", "url": "https://www.nasa.gov/news-release/feed/"},
+      {"name": "BBC Science", "url": "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml"}
+    ]
+  },
+
+  "email_me": true,
+
+  "gmail": {
+    "query": "in:inbox is:unread newer_than:2d -category:promotions -category:social -category:forums -subject:\"Morning brief\"",
+    "max": 15
+  },
+
+  "keep_pages": 14
+}
