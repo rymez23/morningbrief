@@ -53,6 +53,19 @@ def test_chrome_versions_compare_as_numbers():
     assert updates.version_tuple("99.0") < updates.version_tuple("158.0")   # text compare would say the opposite
 
 
+def test_chrome_ignores_small_early_rollouts():
+    # Real data from Nov 24, 2026: 159 had only reached 1% of users
+    releases = [{"version": "158.0.8127.37", "fraction": 0.5}, {"version": "158.0.8127.89", "fraction": 1.0},
+                {"version": "159.0.8154.13", "fraction": 0.01}, {"version": "157.0.8103.81", "fraction": 0.01}]
+    assert updates.widely_released(releases) == "158.0.8127.89"
+    assert updates.chrome_status("158.0.8127.89", updates.widely_released(releases))["up_to_date"] is True
+    # Once 159 reaches most users, it becomes "latest"
+    releases.append({"version": "159.0.8154.20", "fraction": 0.75})
+    assert updates.widely_released(releases) == "159.0.8154.20"
+    # Nothing past the threshold yet: use the most widely served
+    assert updates.widely_released([{"version": "1.0", "fraction": 0.2}, {"version": "2.0", "fraction": 0.1}]) == "1.0"
+
+
 def test_windows_update_single_result_is_a_list():
     fake = lambda *a, **k: NS(returncode=0, stdout='"Defender update KB2267602"', stderr="")
     updates.IS_WINDOWS, saved = True, updates.IS_WINDOWS

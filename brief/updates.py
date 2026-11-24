@@ -2,7 +2,7 @@
 UPDATES SECTION: what on your PC needs updating. Read-only: nothing is installed.
 
 Three checks, each independent:
-  chrome_status()      your Chrome version vs. Google's latest stable version
+  chrome_status()      your Chrome version vs. the stable version most users are getting
   winget_upgrades()    apps with updates, via Windows' built-in "winget" tool
   windows_updates()    pending Windows Update items (security, drivers, Defender)
 
@@ -17,10 +17,15 @@ import urllib.request
 
 IS_WINDOWS = sys.platform == "win32"
 
-# Google's public "version history" service. Returns the newest stable Chrome
-# version for 64-bit Windows as JSON, e.g. {"versions": [{"version": "159.0.8154.13"}]}
-CHROME_LATEST_URL = ("https://versionhistory.googleapis.com/v1/chrome/platforms/win64/"
-                     "channels/stable/versions?pageSize=1")
+# Google's public "version history" service. Chrome updates roll out gradually: a new
+# version first goes to ~1% of users, then more over days. This URL lists every version
+# currently being served and what fraction of users get it, e.g.
+#   {"releases": [{"version": "158.0.8127.89", "fraction": 1.0}, {"version": "159.0.8154.13", "fraction": 0.01}]}
+# We only count a version as "the latest" once it reaches at least ROLLOUT_THRESHOLD of
+# users, so the brief doesn't nag about an update Chrome won't offer you yet.
+CHROME_RELEASES_URL = ("https://versionhistory.googleapis.com/v1/chrome/platforms/win64/"
+                       "channels/stable/versions/all/releases?filter=endtime=none")
+ROLLOUT_THRESHOLD = 0.5
 
 # Stops Windows from flashing a console window when we run winget / PowerShell
 NO_WINDOW = getattr(subprocess, "CREATE_NO_WINDOW", 0)
@@ -48,10 +53,19 @@ def installed_chrome_version() -> str | None:
     return None
 
 
+def widely_released(releases: list[dict], threshold: float = ROLLOUT_THRESHOLD) -> str:
+    """Highest version that at least `threshold` of users are getting.
+    If nothing has reached the threshold yet, use the most widely served one."""
+    wide = [r["version"] for r in releases if r.get("fraction", 0) >= threshold]
+    if wide:
+        return max(wide, key=version_tuple)
+    return max(releases, key=lambda r: r.get("fraction", 0))["version"]
+
+
 def latest_chrome_version(timeout: float = 15) -> str:
-    req = urllib.request.Request(CHROME_LATEST_URL, headers={"User-Agent": "morning-brief/0.1"})
+    req = urllib.request.Request(CHROME_RELEASES_URL, headers={"User-Agent": "morning-brief/0.2"})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
-        return json.load(resp)["versions"][0]["version"]
+        return widely_released(json.load(resp)["releases"])
 
 
 def chrome_status(installed: str | None = None, latest: str | None = None) -> dict | None:
